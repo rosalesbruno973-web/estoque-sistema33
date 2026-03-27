@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
@@ -8,8 +8,23 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f0;color:#1a1a18;font-size:14px}
+
+/* LOGIN */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:#fff;border:1px solid #e5e5e0;border-radius:16px;padding:36px 32px;width:100%;max-width:380px}
+.login-box h1{font-size:18px;font-weight:600;margin-bottom:4px}
+.login-box p{font-size:13px;color:#888;margin-bottom:24px}
+.login-box label{font-size:12px;color:#666;display:block;margin-bottom:4px}
+.login-box input{width:100%;padding:9px 12px;font-size:13px;border:1px solid #ddd;border-radius:8px;font-family:inherit;outline:none;margin-bottom:14px}
+.login-box input:focus{border-color:#888}
+.login-err{font-size:12px;color:#c0392b;margin-bottom:12px;display:none}
+.login-msg{font-size:12px;color:#27ae60;margin-bottom:12px;display:none}
+
+/* APP */
 .topbar{background:#fff;border-bottom:1px solid #e5e5e0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100}
 .topbar h1{font-size:15px;font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.user-badge{font-size:12px;color:#888;background:#f4f4f0;padding:4px 10px;border-radius:20px}
 .tabs{display:flex;gap:2px}
 .tab{padding:6px 14px;font-size:13px;border-radius:6px;cursor:pointer;border:none;background:transparent;color:#666;font-family:inherit}
 .tab.active{background:#f0f0eb;color:#1a1a18;font-weight:500}
@@ -45,6 +60,7 @@ input:focus,select:focus{border-color:#888}
 .btn-primary{background:#1a1a18;color:#fff;border-color:transparent}
 .btn-primary:hover{background:#333}
 .btn-sm{padding:4px 10px;font-size:12px}
+.btn-danger{background:#fff;color:#c0392b;border-color:#f5c6c6}
 .btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 .alert-banner{background:#fef3d8;border:1px solid #f5c842;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#6b4400}
 .panel{display:none}
@@ -67,125 +83,164 @@ input:focus,select:focus{border-color:#888}
 .loading{text-align:center;padding:24px;color:#aaa;font-size:13px}
 .mov-entrada{background:#e8f5e0;color:#2d6a0e}
 .mov-saida{background:#fde8e8;color:#8b1f1f}
-.api-setup{background:#fff;border:1px solid #e5c84a;border-radius:12px;padding:20px;margin-bottom:16px}
-.api-setup h2{font-size:14px;font-weight:600;margin-bottom:8px;color:#6b4400}
-.api-setup p{font-size:13px;color:#888;margin-bottom:12px;line-height:1.5}
+.info-row{font-size:12px;color:#888;background:#f8f8f5;border-radius:8px;padding:8px 12px;margin-bottom:14px}
 @media(max-width:700px){
   .metrics{grid-template-columns:1fr 1fr}
   .c3,.c4{grid-template-columns:1fr 1fr}
   .tabs .tab{padding:6px 9px;font-size:12px}
+  .topbar{flex-wrap:wrap;height:auto;padding:10px 16px;gap:8px}
 }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <h1>Controle de Estoque</h1>
-  <div class="tabs">
-    <button class="tab active" onclick="showTab('estoque')">Estoque</button>
-    <button class="tab" onclick="showTab('registrar')">Registrar</button>
-    <button class="tab" onclick="showTab('fornecedores')">Fornecedores</button>
-    <button class="tab" onclick="showTab('ordens')">Ordens de compra</button>
-    <button class="tab" onclick="showTab('config')">Configurações</button>
+<!-- TELA DE LOGIN -->
+<div id="tela-login" class="login-wrap">
+  <div class="login-box">
+    <h1>Controle de Estoque</h1>
+    <p>Entre com seu e-mail e senha para acessar</p>
+    <div id="login-err" class="login-err"></div>
+    <div id="login-msg" class="login-msg"></div>
+    <div id="form-login">
+      <label>E-mail</label>
+      <input id="l-email" type="email" placeholder="seu@email.com"/>
+      <label>Senha</label>
+      <input id="l-senha" type="password" placeholder="••••••••"/>
+      <button class="btn btn-primary" style="width:100%;margin-bottom:12px" onclick="fazerLogin()">Entrar</button>
+      <button class="btn" style="width:100%;font-size:12px" onclick="mostrarCadastro()">Criar nova conta</button>
+    </div>
+    <div id="form-cadastro" style="display:none">
+      <label>Nome completo</label>
+      <input id="c-nome" type="text" placeholder="Seu nome"/>
+      <label>E-mail</label>
+      <input id="c-email" type="email" placeholder="seu@email.com"/>
+      <label>Senha</label>
+      <input id="c-senha" type="password" placeholder="Mínimo 6 caracteres"/>
+      <button class="btn btn-primary" style="width:100%;margin-bottom:12px" onclick="fazerCadastro()">Criar conta</button>
+      <button class="btn" style="width:100%;font-size:12px" onclick="mostrarLogin()">Já tenho conta</button>
+    </div>
   </div>
 </div>
 
-<div class="main">
-  <div id="alertas-banner"></div>
-
-  <div class="metrics">
-    <div class="metric"><div class="mlabel">Itens cadastrados</div><div class="mvalue" id="m-itens">—</div></div>
-    <div class="metric"><div class="mlabel">Alertas ativos</div><div class="mvalue" id="m-alertas" style="color:#d4860a">—</div></div>
-    <div class="metric"><div class="mlabel">Fornecedores</div><div class="mvalue" id="m-forn">—</div></div>
-    <div class="metric"><div class="mlabel">Ordens pendentes</div><div class="mvalue" id="m-oc" style="color:#1a4fa0">—</div></div>
-  </div>
-
-  <!-- ESTOQUE -->
-  <div id="panel-estoque" class="panel active">
-    <div class="card">
-      <div class="card-title">Cadastrar matéria-prima</div>
-      <div class="frow c4">
-        <div><label>Nome</label><input id="n-nome" placeholder="Ex: Aço inox 304"/></div>
-        <div><label>Unidade</label><select id="n-un"><option>kg</option><option>un</option><option>m</option><option>L</option><option>cx</option></select></div>
-        <div><label>Qtd inicial</label><input id="n-qtd" type="number" min="0" placeholder="0"/></div>
-        <div><label>Estoque mínimo</label><input id="n-min" type="number" min="0" placeholder="0"/></div>
+<!-- APP PRINCIPAL -->
+<div id="tela-app" style="display:none">
+  <div class="topbar">
+    <h1>Controle de Estoque</h1>
+    <div class="topbar-right">
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('estoque')">Estoque</button>
+        <button class="tab" onclick="showTab('registrar')">Registrar</button>
+        <button class="tab" onclick="showTab('fornecedores')">Fornecedores</button>
+        <button class="tab" onclick="showTab('ordens')">Ordens de compra</button>
+        <button class="tab" onclick="showTab('config')">Config</button>
       </div>
-      <div class="frow c2">
-        <div><label>Categoria</label><input id="n-cat" placeholder="Ex: Metais"/></div>
-        <div><label>Qtd sugerida p/ compra</label><input id="n-sug" type="number" min="0" placeholder="0"/></div>
-      </div>
-      <div class="btn-row"><button class="btn btn-primary" onclick="addItem()">Adicionar item</button></div>
-    </div>
-    <div class="card">
-      <div class="card-title">Itens em estoque</div>
-      <div id="tb-estoque-wrap"><div class="loading">Carregando...</div></div>
+      <span class="user-badge" id="user-nome">—</span>
+      <button class="btn btn-danger btn-sm" onclick="fazerLogout()">Sair</button>
     </div>
   </div>
 
-  <!-- REGISTRAR -->
-  <div id="panel-registrar" class="panel">
-    <div class="card">
-      <div class="card-title">Registrar movimentação</div>
-      <div class="frow c2">
-        <div><label>Item</label><select id="mov-item"><option value="">Selecione...</option></select></div>
-        <div><label>Tipo</label><select id="mov-tipo"><option value="entrada">Entrada (compra/recebimento)</option><option value="saida">Saída (produção)</option></select></div>
-      </div>
-      <div class="frow c2">
-        <div><label>Quantidade</label><input id="mov-qtd" type="number" min="1" placeholder="0"/></div>
-        <div><label>Responsável</label><input id="mov-resp" placeholder="Nome"/></div>
-      </div>
-      <div class="frow"><div><label>Observação</label><input id="mov-obs" placeholder="Ex: NF 12345 / OP #42"/></div></div>
-      <div class="btn-row"><button class="btn btn-primary" onclick="addMov()">Confirmar</button></div>
+  <div class="main">
+    <div id="alertas-banner"></div>
+    <div class="metrics">
+      <div class="metric"><div class="mlabel">Itens cadastrados</div><div class="mvalue" id="m-itens">—</div></div>
+      <div class="metric"><div class="mlabel">Alertas ativos</div><div class="mvalue" id="m-alertas" style="color:#d4860a">—</div></div>
+      <div class="metric"><div class="mlabel">Fornecedores</div><div class="mvalue" id="m-forn">—</div></div>
+      <div class="metric"><div class="mlabel">Ordens pendentes</div><div class="mvalue" id="m-oc" style="color:#1a4fa0">—</div></div>
     </div>
-    <div class="card">
-      <div class="card-title">Últimas movimentações</div>
-      <div id="tb-mov-wrap"><div class="loading">Carregando...</div></div>
-    </div>
-  </div>
 
-  <!-- FORNECEDORES -->
-  <div id="panel-fornecedores" class="panel">
-    <div class="card">
-      <div class="card-title">Cadastrar fornecedor</div>
-      <div class="frow c2">
-        <div><label>Nome / razão social</label><input id="f-nome" placeholder="Ex: Metais Brasil Ltda"/></div>
-        <div><label>E-mail</label><input id="f-email" placeholder="compras@fornecedor.com.br"/></div>
+    <!-- ESTOQUE -->
+    <div id="panel-estoque" class="panel active">
+      <div class="card">
+        <div class="card-title">Cadastrar matéria-prima</div>
+        <div class="frow c4">
+          <div><label>Nome</label><input id="n-nome" placeholder="Ex: Aço inox 304"/></div>
+          <div><label>Unidade</label><select id="n-un"><option>kg</option><option>un</option><option>m</option><option>L</option><option>cx</option></select></div>
+          <div><label>Qtd inicial</label><input id="n-qtd" type="number" min="0" placeholder="0"/></div>
+          <div><label>Estoque mínimo</label><input id="n-min" type="number" min="0" placeholder="0"/></div>
+        </div>
+        <div class="frow c2">
+          <div><label>Categoria</label><input id="n-cat" placeholder="Ex: Metais"/></div>
+          <div><label>Qtd sugerida p/ compra</label><input id="n-sug" type="number" min="0" placeholder="0"/></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="addItem()">Adicionar item</button></div>
       </div>
-      <div class="frow c2">
-        <div><label>Telefone / WhatsApp</label><input id="f-tel" placeholder="(11) 99999-9999"/></div>
-        <div><label>Materiais fornecidos</label><input id="f-mats" placeholder="Ex: Aço inox, Alumínio"/></div>
+      <div class="card">
+        <div class="card-title">Itens em estoque</div>
+        <div id="tb-estoque-wrap"><div class="loading">Carregando...</div></div>
       </div>
-      <div class="btn-row"><button class="btn btn-primary" onclick="addForn()">Cadastrar fornecedor</button></div>
     </div>
-    <div class="card">
-      <div class="card-title">Fornecedores cadastrados</div>
-      <div id="tb-forn-wrap"><div class="loading">Carregando...</div></div>
-    </div>
-  </div>
 
-  <!-- ORDENS DE COMPRA -->
-  <div id="panel-ordens" class="panel">
-    <div class="ia-box">
-      <div class="ia-header">
-        <div class="ia-dot" id="ia-dot"></div>
-        <div class="ia-title">Agente de cotações</div>
-        <div class="ia-sub" id="ia-sub">Monitorando estoque...</div>
+    <!-- REGISTRAR -->
+    <div id="panel-registrar" class="panel">
+      <div class="card">
+        <div class="card-title">Registrar movimentação</div>
+        <div class="info-row" id="info-usuario">Registrando como: <strong id="info-nome-user">—</strong> — o sistema salva seu nome automaticamente.</div>
+        <div class="frow c2">
+          <div><label>Item</label><select id="mov-item"><option value="">Selecione...</option></select></div>
+          <div><label>Tipo</label><select id="mov-tipo"><option value="entrada">Entrada (compra/recebimento)</option><option value="saida">Saída (produção)</option></select></div>
+        </div>
+        <div class="frow c2">
+          <div><label>Quantidade</label><input id="mov-qtd" type="number" min="1" placeholder="0"/></div>
+          <div><label>Observação</label><input id="mov-obs" placeholder="Ex: NF 12345 / OP #42"/></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="addMov()">Confirmar movimentação</button></div>
       </div>
-      <div class="ia-msg">O agente monitora o estoque automaticamente. Quando um item atingir o estoque mínimo, ele gera uma ordem de compra com sugestão de quantidade e seleciona o fornecedor mais adequado.</div>
+      <div class="card">
+        <div class="card-title">Últimas movimentações</div>
+        <div id="tb-mov-wrap"><div class="loading">Carregando...</div></div>
+      </div>
     </div>
-    <div id="oc-lista"><div class="loading">Carregando...</div></div>
-  </div>
 
-  <!-- CONFIGURAÇÕES -->
-  <div id="panel-config" class="panel">
-    <div class="card">
-      <div class="card-title">Chave da API do agente IA</div>
-      <p style="font-size:13px;color:#888;margin-bottom:14px;line-height:1.6">Para o agente gerar ordens de compra com IA, informe sua chave da Anthropic. Ela fica salva apenas neste navegador (localStorage) e nunca é enviada para nenhum servidor além da Anthropic.</p>
-      <div class="frow">
-        <div><label>Anthropic API Key</label><input id="cfg-key" type="password" placeholder="sk-ant-..."/></div>
+    <!-- FORNECEDORES -->
+    <div id="panel-fornecedores" class="panel">
+      <div class="card">
+        <div class="card-title">Cadastrar fornecedor</div>
+        <div class="frow c2">
+          <div><label>Nome / razão social</label><input id="f-nome" placeholder="Ex: Metais Brasil Ltda"/></div>
+          <div><label>E-mail</label><input id="f-email" placeholder="compras@fornecedor.com.br"/></div>
+        </div>
+        <div class="frow c2">
+          <div><label>Telefone / WhatsApp</label><input id="f-tel" placeholder="(11) 99999-9999"/></div>
+          <div><label>Materiais fornecidos</label><input id="f-mats" placeholder="Ex: Aço inox, Alumínio"/></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="addForn()">Cadastrar fornecedor</button></div>
       </div>
-      <div class="btn-row"><button class="btn btn-primary" onclick="salvarKey()">Salvar chave</button></div>
-      <div id="cfg-status" style="font-size:12px;color:#52a830;margin-top:8px;text-align:right"></div>
+      <div class="card">
+        <div class="card-title">Fornecedores cadastrados</div>
+        <div id="tb-forn-wrap"><div class="loading">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- ORDENS -->
+    <div id="panel-ordens" class="panel">
+      <div class="ia-box">
+        <div class="ia-header">
+          <div class="ia-dot" id="ia-dot"></div>
+          <div class="ia-title">Agente de cotações</div>
+          <div class="ia-sub" id="ia-sub">Monitorando estoque...</div>
+        </div>
+        <div class="ia-msg">O agente monitora o estoque automaticamente. Quando um item atingir o estoque mínimo, ele gera uma ordem de compra com sugestão de quantidade e seleciona o fornecedor mais adequado.</div>
+      </div>
+      <div id="oc-lista"><div class="loading">Carregando...</div></div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="panel-config" class="panel">
+      <div class="card">
+        <div class="card-title">Chave da API do agente IA</div>
+        <p style="font-size:13px;color:#888;margin-bottom:14px;line-height:1.6">Para o agente gerar ordens de compra com IA, informe sua chave da Anthropic. Ela fica salva apenas neste navegador.</p>
+        <div class="frow">
+          <div><label>Anthropic API Key</label><input id="cfg-key" type="password" placeholder="sk-ant-..."/></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" onclick="salvarKey()">Salvar chave</button></div>
+        <div id="cfg-status" style="font-size:12px;color:#52a830;margin-top:8px;text-align:right"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Convidar colaborador</div>
+        <p style="font-size:13px;color:#888;margin-bottom:14px;line-height:1.6">Compartilhe o link do sistema e peça para a pessoa criar uma conta com o e-mail dela. Cada um terá seu próprio acesso e o sistema rastreia quem fez cada movimentação.</p>
+        <div style="background:#f8f8f5;border-radius:8px;padding:10px 14px;font-size:13px;color:#444;word-break:break-all" id="link-sistema"></div>
+        <div class="btn-row"><button class="btn" onclick="copiarLink()">Copiar link</button></div>
+      </div>
     </div>
   </div>
 </div>
@@ -198,41 +253,115 @@ const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let itens = [], fornecedores = [], ordens = [], movs = [];
 let ocGeradasIds = new Set();
+let usuarioAtual = null;
 
+// ── auth ──────────────────────────────────────────────
+db.auth.onAuthStateChange(async (event, session) => {
+  if (session?.user) {
+    usuarioAtual = session.user;
+    const nome = session.user.user_metadata?.nome || session.user.email;
+    document.getElementById('user-nome').textContent = nome;
+    document.getElementById('info-nome-user').textContent = nome;
+    document.getElementById('tela-login').style.display = 'none';
+    document.getElementById('tela-app').style.display = 'block';
+    document.getElementById('link-sistema').textContent = window.location.href;
+    const k = localStorage.getItem('anthropic_key');
+    if (k) document.getElementById('cfg-key').value = k;
+    await loadAll();
+  } else {
+    usuarioAtual = null;
+    document.getElementById('tela-login').style.display = 'flex';
+    document.getElementById('tela-app').style.display = 'none';
+  }
+});
+
+function mostrarErro(msg) {
+  const el = document.getElementById('login-err');
+  el.textContent = msg; el.style.display = 'block';
+  document.getElementById('login-msg').style.display = 'none';
+}
+function mostrarMsgLogin(msg) {
+  const el = document.getElementById('login-msg');
+  el.textContent = msg; el.style.display = 'block';
+  document.getElementById('login-err').style.display = 'none';
+}
+
+async function fazerLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const senha = document.getElementById('l-senha').value;
+  if (!email || !senha) { mostrarErro('Preencha e-mail e senha.'); return; }
+  const { error } = await db.auth.signInWithPassword({ email, password: senha });
+  if (error) mostrarErro('E-mail ou senha incorretos.');
+}
+
+async function fazerCadastro() {
+  const nome  = document.getElementById('c-nome').value.trim();
+  const email = document.getElementById('c-email').value.trim();
+  const senha = document.getElementById('c-senha').value;
+  if (!nome || !email || !senha) { mostrarErro('Preencha todos os campos.'); return; }
+  if (senha.length < 6) { mostrarErro('Senha deve ter pelo menos 6 caracteres.'); return; }
+  const { error } = await db.auth.signUp({
+    email, password: senha,
+    options: { data: { nome } }
+  });
+  if (error) { mostrarErro(error.message); return; }
+  mostrarMsgLogin('Conta criada! Verifique seu e-mail para confirmar, ou tente entrar agora.');
+  mostrarLogin();
+}
+
+async function fazerLogout() {
+  await db.auth.signOut();
+}
+
+function mostrarCadastro() {
+  document.getElementById('form-login').style.display = 'none';
+  document.getElementById('form-cadastro').style.display = 'block';
+  document.getElementById('login-err').style.display = 'none';
+}
+function mostrarLogin() {
+  document.getElementById('form-cadastro').style.display = 'none';
+  document.getElementById('form-login').style.display = 'block';
+  document.getElementById('login-err').style.display = 'none';
+}
+
+// ── helpers ───────────────────────────────────────────
+function getNomeUsuario() {
+  return usuarioAtual?.user_metadata?.nome || usuarioAtual?.email || 'Desconhecido';
+}
 function getApiKey() { return localStorage.getItem('anthropic_key') || ''; }
 function salvarKey() {
   const k = document.getElementById('cfg-key').value.trim();
   if (!k) { alert('Informe a chave.'); return; }
   localStorage.setItem('anthropic_key', k);
-  document.getElementById('cfg-status').textContent = 'Chave salva com sucesso!';
+  document.getElementById('cfg-status').textContent = 'Chave salva!';
   setTimeout(() => document.getElementById('cfg-status').textContent = '', 3000);
 }
-
-// ── helpers ──────────────────────────────────────────
+function copiarLink() {
+  navigator.clipboard.writeText(window.location.href);
+  alert('Link copiado!');
+}
 function status(it) {
-  if (it.saldo <= 0)          return { label:'Crítico', cls:'b-crit' };
-  if (it.saldo <= it.minimo)  return { label:'Baixo',   cls:'b-low'  };
+  if (it.saldo <= 0)         return { label:'Crítico', cls:'b-crit' };
+  if (it.saldo <= it.minimo) return { label:'Baixo',   cls:'b-low'  };
   return { label:'Normal', cls:'b-ok' };
 }
-function pct(it) {
-  return it.minimo ? Math.min(100, Math.round(it.saldo / (it.minimo * 2) * 100)) : 100;
-}
+function pct(it) { return it.minimo ? Math.min(100, Math.round(it.saldo/(it.minimo*2)*100)) : 100; }
 function barColor(it) {
   const s = status(it).label;
-  return s === 'Crítico' ? '#d94040' : s === 'Baixo' ? '#d4860a' : '#52a830';
+  return s==='Crítico'?'#d94040':s==='Baixo'?'#d4860a':'#52a830';
 }
 function fmtDate(d) {
-  return new Date(d).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  return new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
 }
 
 // ── render ────────────────────────────────────────────
 function renderEstoque() {
   const wrap = document.getElementById('tb-estoque-wrap');
-  if (!itens.length) { wrap.innerHTML = '<div class="empty">Nenhum item cadastrado.</div>'; return; }
+  if (!itens.length) { wrap.innerHTML='<div class="empty">Nenhum item cadastrado.</div>'; return; }
   wrap.innerHTML = `<table>
     <thead><tr><th>Item</th><th>Categoria</th><th>Saldo</th><th>Mínimo</th><th>Status</th><th>Nível</th><th></th></tr></thead>
     <tbody>${itens.map(it => {
-      const s = status(it), p = pct(it);
+      const s=status(it), p=pct(it);
       return `<tr>
         <td><strong>${it.nome}</strong></td>
         <td style="color:#888">${it.categoria||'—'}</td>
@@ -240,35 +369,36 @@ function renderEstoque() {
         <td style="color:#888">${it.minimo} ${it.unidade}</td>
         <td><span class="badge ${s.cls}">${s.label}</span></td>
         <td><div class="bar-wrap"><div class="bar-fill" style="width:${p}%;background:${barColor(it)}"></div></div></td>
-        <td>${it.saldo <= it.minimo ? `<button class="btn btn-sm" onclick="gerarOCManual(${it.id})">Cotar agora</button>` : ''}</td>
+        <td>${it.saldo<=it.minimo?`<button class="btn btn-sm" onclick="gerarOCManual(${it.id})">Cotar agora</button>`:''}</td>
       </tr>`;
     }).join('')}</tbody></table>`;
 }
 
 function renderMov() {
   const wrap = document.getElementById('tb-mov-wrap');
-  if (!movs.length) { wrap.innerHTML = '<div class="empty">Nenhuma movimentação.</div>'; return; }
+  if (!movs.length) { wrap.innerHTML='<div class="empty">Nenhuma movimentação.</div>'; return; }
   wrap.innerHTML = `<table>
-    <thead><tr><th>Data</th><th>Item</th><th>Tipo</th><th>Qtd</th><th>Saldo após</th><th>Responsável</th></tr></thead>
+    <thead><tr><th>Data</th><th>Item</th><th>Tipo</th><th>Qtd</th><th>Saldo após</th><th>Responsável</th><th>Obs</th></tr></thead>
     <tbody>${movs.slice(0,50).map(m => {
-      const it = itens.find(i => i.id === m.item_id);
+      const it=itens.find(i=>i.id===m.item_id);
       return `<tr>
         <td style="color:#888;white-space:nowrap">${fmtDate(m.criado_em)}</td>
-        <td>${it ? it.nome : '—'}</td>
+        <td>${it?it.nome:'—'}</td>
         <td><span class="badge mov-${m.tipo}">${m.tipo==='entrada'?'Entrada':'Saída'}</span></td>
         <td><strong>${m.tipo==='saida'?'-':'+'}${m.quantidade}</strong></td>
         <td>${m.saldo_apos}</td>
-        <td style="color:#888">${m.responsavel||'—'}</td>
+        <td style="color:#555;font-weight:500">${m.responsavel||'—'}</td>
+        <td style="color:#888;font-size:12px">${m.observacao||'—'}</td>
       </tr>`;
     }).join('')}</tbody></table>`;
 }
 
 function renderForn() {
   const wrap = document.getElementById('tb-forn-wrap');
-  if (!fornecedores.length) { wrap.innerHTML = '<div class="empty">Nenhum fornecedor.</div>'; return; }
+  if (!fornecedores.length) { wrap.innerHTML='<div class="empty">Nenhum fornecedor.</div>'; return; }
   wrap.innerHTML = `<table>
     <thead><tr><th>Fornecedor</th><th>E-mail</th><th>Telefone</th><th>Materiais</th></tr></thead>
-    <tbody>${fornecedores.map(f => `<tr>
+    <tbody>${fornecedores.map(f=>`<tr>
       <td><strong>${f.nome}</strong></td>
       <td style="color:#888">${f.email||'—'}</td>
       <td style="color:#888">${f.telefone||'—'}</td>
@@ -278,10 +408,10 @@ function renderForn() {
 
 function renderOrdens() {
   const el = document.getElementById('oc-lista');
-  if (!ordens.length) { el.innerHTML = '<div class="empty">Nenhuma ordem de compra gerada ainda.</div>'; return; }
+  if (!ordens.length) { el.innerHTML='<div class="empty">Nenhuma ordem de compra gerada ainda.</div>'; return; }
   el.innerHTML = [...ordens].reverse().map(oc => {
-    const it   = itens.find(i => i.id === oc.item_id);
-    const forn = fornecedores.find(f => f.id === oc.fornecedor_id);
+    const it=itens.find(i=>i.id===oc.item_id);
+    const forn=fornecedores.find(f=>f.id===oc.fornecedor_id);
     return `<div class="oc-card">
       <div class="oc-head">
         <div>
@@ -299,10 +429,10 @@ function renderOrdens() {
 }
 
 function renderBanner() {
-  const baixos = itens.filter(it => it.saldo <= it.minimo);
+  const baixos = itens.filter(it=>it.saldo<=it.minimo);
   const el = document.getElementById('alertas-banner');
   if (!baixos.length) { el.innerHTML=''; return; }
-  el.innerHTML = `<div class="alert-banner"><strong>Atenção:</strong> ${baixos.length} item(ns) abaixo do mínimo: ${baixos.map(i=>`<strong>${i.nome}</strong> (${i.saldo} ${i.unidade})`).join(', ')}.</div>`;
+  el.innerHTML=`<div class="alert-banner"><strong>Atenção:</strong> ${baixos.length} item(ns) abaixo do mínimo: ${baixos.map(i=>`<strong>${i.nome}</strong> (${i.saldo} ${i.unidade})`).join(', ')}.</div>`;
 }
 
 function renderMetrics() {
@@ -314,13 +444,11 @@ function renderMetrics() {
 
 function populateMovSelect() {
   const s = document.getElementById('mov-item');
-  s.innerHTML = '<option value="">Selecione...</option>' + itens.map(it=>`<option value="${it.id}">${it.nome} (${it.saldo} ${it.unidade})</option>`).join('');
+  s.innerHTML='<option value="">Selecione...</option>'+itens.map(it=>`<option value="${it.id}">${it.nome} (${it.saldo} ${it.unidade})</option>`).join('');
 }
 
 function renderAll() {
   renderEstoque(); renderMov(); renderForn(); renderOrdens(); renderBanner(); renderMetrics(); populateMovSelect();
-  const k = getApiKey();
-  if (k) document.getElementById('cfg-key').value = k;
 }
 
 // ── carregar ──────────────────────────────────────────
@@ -331,10 +459,10 @@ async function loadAll() {
     db.from('ordens_compra').select('*').order('criado_em'),
     db.from('movimentacoes').select('*').order('criado_em',{ascending:false}),
   ]);
-  itens        = ri.data || [];
-  fornecedores = rf.data || [];
-  ordens       = ro.data || [];
-  movs         = rm.data || [];
+  itens        = ri.data||[];
+  fornecedores = rf.data||[];
+  ordens       = ro.data||[];
+  movs         = rm.data||[];
   ocGeradasIds = new Set(ordens.map(o=>o.item_id));
   renderAll();
   verificarAlertas();
@@ -380,21 +508,23 @@ async function addMov() {
   const it = itens.find(i=>i.id===itemId);
   if (tipo==='saida'&&qtd>it.saldo) { alert(`Saldo insuficiente: ${it.saldo} ${it.unidade}`); return; }
   const novoSaldo = tipo==='entrada' ? it.saldo+qtd : it.saldo-qtd;
+  // Responsável vem do usuário logado — não pode ser alterado
+  const responsavel = getNomeUsuario();
   await Promise.all([
     db.from('movimentacoes').insert({
       item_id:    itemId, tipo, quantidade:qtd, saldo_apos:novoSaldo,
-      responsavel:document.getElementById('mov-resp').value.trim()||null,
+      responsavel,
       observacao: document.getElementById('mov-obs').value.trim()||null,
     }),
     db.from('itens').update({saldo:novoSaldo}).eq('id',itemId),
   ]);
-  ['mov-qtd','mov-resp','mov-obs'].forEach(id=>document.getElementById(id).value='');
+  ['mov-qtd','mov-obs'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('mov-item').value='';
   await loadAll();
 }
 
 async function atualizarOC(id, status) {
-  await db.from('ordens_compra').update({status}).eq('id',id);
+  await db.from('ordens_compra').update({status, aprovado_por:getNomeUsuario()}).eq('id',id);
   await loadAll();
 }
 
@@ -407,35 +537,35 @@ function matchForn(item) {
       mat.trim().toLowerCase().includes(item.nome.toLowerCase().split(' ')[0])
     )
   );
-  return m || fornecedores[0];
+  return m||fornecedores[0];
 }
 
 function gerarTextoLocal(item, fornNome, fornEmail, qtd) {
   const hoje = new Date().toLocaleDateString('pt-BR');
-  return `ORDEM DE COMPRA\nData: ${hoje}\n\nItem: ${item.nome}\nCategoria: ${item.categoria||'—'}\nQuantidade solicitada: ${qtd} ${item.unidade}\n\nJustificativa: Estoque abaixo do mínimo.\nSaldo atual: ${item.saldo} ${item.unidade} | Mínimo: ${item.minimo} ${item.unidade}\n\nFornecedor sugerido: ${fornNome}${fornEmail?'\nContato: '+fornEmail:''}\nPrazo de entrega esperado: 5 dias úteis\n\nAssinatura do responsável: ___________________________`;
+  return `ORDEM DE COMPRA\nData: ${hoje}\nSolicitante: ${getNomeUsuario()}\n\nItem: ${item.nome}\nCategoria: ${item.categoria||'—'}\nQuantidade solicitada: ${qtd} ${item.unidade}\n\nJustificativa: Estoque abaixo do mínimo.\nSaldo atual: ${item.saldo} ${item.unidade} | Mínimo: ${item.minimo} ${item.unidade}\n\nFornecedor sugerido: ${fornNome}${fornEmail?'\nContato: '+fornEmail:''}\nPrazo de entrega esperado: 5 dias úteis\n\nAssinatura do responsável: ___________________________`;
 }
 
 async function gerarOC(item) {
-  setIA(true, 'Gerando ordem de compra...');
+  setIA(true,'Gerando ordem de compra...');
   const forn     = matchForn(item);
-  const qtdSug   = item.qtd_sugerida || item.minimo * 2 || 10;
-  const fornNome = forn ? forn.nome  : 'A definir';
-  const fornEmail= forn ? forn.email : '';
+  const qtdSug   = item.qtd_sugerida||item.minimo*2||10;
+  const fornNome = forn?forn.nome:'A definir';
+  const fornEmail= forn?forn.email:'';
   let textoOrdem = '';
 
   const apiKey = getApiKey();
   if (apiKey) {
     try {
       const hoje = new Date().toLocaleDateString('pt-BR');
-      const prompt = `Você é um agente de compras industrial. Gere uma ordem de compra formal em português brasileiro.\n\nItem: ${item.nome}\nCategoria: ${item.categoria||'—'}\nSaldo atual: ${item.saldo} ${item.unidade}\nEstoque mínimo: ${item.minimo} ${item.unidade}\nQuantidade solicitada: ${qtdSug} ${item.unidade}\nFornecedor: ${fornNome}${fornEmail?'\nContato: '+fornEmail:''}\nData: ${hoje}\n\nGere a ordem com: cabeçalho, item, quantidade, justificativa, fornecedor, prazo de 5 dias úteis e campo de assinatura. Seja direto e profissional.`;
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
-        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user',content:prompt}] }),
+      const prompt = `Você é um agente de compras industrial. Gere uma ordem de compra formal em português brasileiro.\n\nItem: ${item.nome}\nCategoria: ${item.categoria||'—'}\nSaldo atual: ${item.saldo} ${item.unidade}\nEstoque mínimo: ${item.minimo} ${item.unidade}\nQuantidade solicitada: ${qtdSug} ${item.unidade}\nFornecedor: ${fornNome}${fornEmail?'\nContato: '+fornEmail:''}\nSolicitante: ${getNomeUsuario()}\nData: ${hoje}\n\nGere a ordem com: cabeçalho, item, quantidade, justificativa, fornecedor, prazo de 5 dias úteis e campo de assinatura. Seja direto e profissional.`;
+      const res = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]}),
       });
       const data = await res.json();
       textoOrdem = data.content?.map(b=>b.text||'').join('')||'';
-    } catch { textoOrdem = ''; }
+    } catch { textoOrdem=''; }
   }
 
   if (!textoOrdem) textoOrdem = gerarTextoLocal(item, fornNome, fornEmail, qtdSug);
@@ -447,7 +577,7 @@ async function gerarOC(item) {
     status:       'Pendente',
     texto_ordem:  textoOrdem,
   });
-  setIA(false, 'Monitorando estoque...');
+  setIA(false,'Monitorando estoque...');
   await loadAll();
   showTab('ordens');
 }
@@ -460,13 +590,13 @@ async function gerarOCManual(itemId) {
 function verificarAlertas() {
   itens.filter(it=>it.saldo<=it.minimo&&!ocGeradasIds.has(it.id)).forEach(it=>{
     ocGeradasIds.add(it.id);
-    setTimeout(()=>gerarOC(it), 600);
+    setTimeout(()=>gerarOC(it),600);
   });
 }
 
-function setIA(thinking, msg) {
-  document.getElementById('ia-dot').className = 'ia-dot'+(thinking?' thinking':'');
-  document.getElementById('ia-sub').textContent = msg;
+function setIA(thinking,msg) {
+  document.getElementById('ia-dot').className='ia-dot'+(thinking?' thinking':'');
+  document.getElementById('ia-sub').textContent=msg;
 }
 
 function showTab(tab) {
@@ -475,8 +605,6 @@ function showTab(tab) {
     document.querySelectorAll('.tab')[i].classList.toggle('active',t===tab);
   });
 }
-
-loadAll();
 </script>
 </body>
 </html>
