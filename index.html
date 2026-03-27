@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Controle de Estoque</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f0;color:#1a1a18;font-size:14px}
+.topbar{background:#fff;border-bottom:1px solid #e5e5e0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100}
+.topbar h1{font-size:15px;font-weight:600}
+.tabs{display:flex;gap:2px}
+.tab{padding:6px 14px;font-size:13px;border-radius:6px;cursor:pointer;border:none;background:transparent;color:#666;font-family:inherit}
+.tab.active{background:#f0f0eb;color:#1a1a18;font-weight:500}
+.main{max-width:1100px;margin:0 auto;padding:20px 24px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.metric{background:#fff;border:1px solid #e5e5e0;border-radius:10px;padding:14px 16px}
+.metric .mlabel{font-size:11px;color:#888;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
+.metric .mvalue{font-size:22px;font-weight:600}
+.card{background:#fff;border:1px solid #e5e5e0;border-radius:12px;padding:20px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:16px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.4px;padding:0 0 10px;border-bottom:1px solid #f0f0eb}
+td{padding:10px 0;border-bottom:1px solid #f8f8f5;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500}
+.b-ok{background:#e8f5e0;color:#2d6a0e}
+.b-low{background:#fef0d8;color:#7a4a0a}
+.b-crit{background:#fde8e8;color:#8b1f1f}
+.b-pend{background:#e4effe;color:#1a4fa0}
+.b-aprov{background:#e8f5e0;color:#2d6a0e}
+.b-rec{background:#fde8e8;color:#8b1f1f}
+.bar-wrap{height:5px;border-radius:3px;background:#f0f0eb;width:80px;display:inline-block;vertical-align:middle}
+.bar-fill{height:100%;border-radius:3px}
+label{font-size:12px;color:#666;display:block;margin-bottom:4px}
+input,select{width:100%;padding:8px 10px;font-size:13px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a18;font-family:inherit;outline:none}
+input:focus,select:focus{border-color:#888}
+.frow{display:grid;gap:10px;margin-bottom:12px}
+.c2{grid-template-columns:1fr 1fr}
+.c3{grid-template-columns:2fr 1fr 1fr}
+.c4{grid-template-columns:2fr 1fr 1fr 1fr}
+.btn{padding:8px 16px;font-size:13px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500;border:1px solid #ddd;background:#fff;color:#1a1a18;transition:background .15s}
+.btn:hover{background:#f5f5f0}
+.btn-primary{background:#1a1a18;color:#fff;border-color:transparent}
+.btn-primary:hover{background:#333}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.alert-banner{background:#fef3d8;border:1px solid #f5c842;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#6b4400}
+.panel{display:none}
+.panel.active{display:block}
+.ia-box{background:#f8f8f5;border:1px solid #e5e5e0;border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.ia-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ia-dot{width:8px;height:8px;border-radius:50%;background:#52a830;flex-shrink:0}
+.ia-dot.thinking{background:#d4860a;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.ia-title{font-size:13px;font-weight:600}
+.ia-sub{font-size:12px;color:#888;margin-left:auto}
+.ia-msg{font-size:13px;color:#555;line-height:1.6}
+.oc-card{border:1px solid #e5e5e0;border-radius:10px;padding:16px;margin-bottom:10px}
+.oc-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:10px}
+.oc-num{font-size:13px;font-weight:600}
+.oc-meta{font-size:12px;color:#888;margin-top:2px}
+.oc-actions{display:flex;gap:6px;flex-shrink:0}
+.oc-texto{background:#f8f8f5;border-radius:8px;padding:12px;font-size:13px;line-height:1.7;color:#333;white-space:pre-wrap}
+.empty{font-size:13px;color:#aaa;text-align:center;padding:24px 0}
+.loading{text-align:center;padding:24px;color:#aaa;font-size:13px}
+.mov-entrada{background:#e8f5e0;color:#2d6a0e}
+.mov-saida{background:#fde8e8;color:#8b1f1f}
+.api-setup{background:#fff;border:1px solid #e5c84a;border-radius:12px;padding:20px;margin-bottom:16px}
+.api-setup h2{font-size:14px;font-weight:600;margin-bottom:8px;color:#6b4400}
+.api-setup p{font-size:13px;color:#888;margin-bottom:12px;line-height:1.5}
+@media(max-width:700px){
+  .metrics{grid-template-columns:1fr 1fr}
+  .c3,.c4{grid-template-columns:1fr 1fr}
+  .tabs .tab{padding:6px 9px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Controle de Estoque</h1>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('estoque')">Estoque</button>
+    <button class="tab" onclick="showTab('registrar')">Registrar</button>
+    <button class="tab" onclick="showTab('fornecedores')">Fornecedores</button>
+    <button class="tab" onclick="showTab('ordens')">Ordens de compra</button>
+    <button class="tab" onclick="showTab('config')">Configurações</button>
+  </div>
+</div>
+
+<div class="main">
+  <div id="alertas-banner"></div>
+
+  <div class="metrics">
+    <div class="metric"><div class="mlabel">Itens cadastrados</div><div class="mvalue" id="m-itens">—</div></div>
+    <div class="metric"><div class="mlabel">Alertas ativos</div><div class="mvalue" id="m-alertas" style="color:#d4860a">—</div></div>
+    <div class="metric"><div class="mlabel">Fornecedores</div><div class="mvalue" id="m-forn">—</div></div>
+    <div class="metric"><div class="mlabel">Ordens pendentes</div><div class="mvalue" id="m-oc" style="color:#1a4fa0">—</div></div>
+  </div>
+
+  <!-- ESTOQUE -->
+  <div id="panel-estoque" class="panel active">
+    <div class="card">
+      <div class="card-title">Cadastrar matéria-prima</div>
+      <div class="frow c4">
+        <div><label>Nome</label><input id="n-nome" placeholder="Ex: Aço inox 304"/></div>
+        <div><label>Unidade</label><select id="n-un"><option>kg</option><option>un</option><option>m</option><option>L</option><option>cx</option></select></div>
+        <div><label>Qtd inicial</label><input id="n-qtd" type="number" min="0" placeholder="0"/></div>
+        <div><label>Estoque mínimo</label><input id="n-min" type="number" min="0" placeholder="0"/></div>
+      </div>
+      <div class="frow c2">
+        <div><label>Categoria</label><input id="n-cat" placeholder="Ex: Metais"/></div>
+        <div><label>Qtd sugerida p/ compra</label><input id="n-sug" type="number" min="0" placeholder="0"/></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="addItem()">Adicionar item</button></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Itens em estoque</div>
+      <div id="tb-estoque-wrap"><div class="loading">Carregando...</div></div>
+    </div>
+  </div>
+
+  <!-- REGISTRAR -->
+  <div id="panel-registrar" class="panel">
+    <div class="card">
+      <div class="card-title">Registrar movimentação</div>
+      <div class="frow c2">
+        <div><label>Item</label><select id="mov-item"><option value="">Selecione...</option></select></div>
+        <div><label>Tipo</label><select id="mov-tipo"><option value="entrada">Entrada (compra/recebimento)</option><option value="saida">Saída (produção)</option></select></div>
+      </div>
+      <div class="frow c2">
+        <div><label>Quantidade</label><input id="mov-qtd" type="number" min="1" placeholder="0"/></div>
+        <div><label>Responsável</label><input id="mov-resp" placeholder="Nome"/></div>
+      </div>
+      <div class="frow"><div><label>Observação</label><input id="mov-obs" placeholder="Ex: NF 12345 / OP #42"/></div></div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="addMov()">Confirmar</button></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Últimas movimentações</div>
+      <div id="tb-mov-wrap"><div class="loading">Carregando...</div></div>
+    </div>
+  </div>
+
+  <!-- FORNECEDORES -->
+  <div id="panel-fornecedores" class="panel">
+    <div class="card">
+      <div class="card-title">Cadastrar fornecedor</div>
+      <div class="frow c2">
+        <div><label>Nome / razão social</label><input id="f-nome" placeholder="Ex: Metais Brasil Ltda"/></div>
+        <div><label>E-mail</label><input id="f-email" placeholder="compras@fornecedor.com.br"/></div>
+      </div>
+      <div class="frow c2">
+        <div><label>Telefone / WhatsApp</label><input id="f-tel" placeholder="(11) 99999-9999"/></div>
+        <div><label>Materiais fornecidos</label><input id="f-mats" placeholder="Ex: Aço inox, Alumínio"/></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="addForn()">Cadastrar fornecedor</button></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Fornecedores cadastrados</div>
+      <div id="tb-forn-wrap"><div class="loading">Carregando...</div></div>
+    </div>
+  </div>
+
+  <!-- ORDENS DE COMPRA -->
+  <div id="panel-ordens" class="panel">
+    <div class="ia-box">
+      <div class="ia-header">
+        <div class="ia-dot" id="ia-dot"></div>
+        <div class="ia-title">Agente de cotações</div>
+        <div class="ia-sub" id="ia-sub">Monitorando estoque...</div>
+      </div>
+      <div class="ia-msg">O agente monitora o estoque automaticamente. Quando um item atingir o estoque mínimo, ele gera uma ordem de compra com sugestão de quantidade e seleciona o fornecedor mais adequado.</div>
+    </div>
+    <div id="oc-lista"><div class="loading">Carregando...</div></div>
+  </div>
+
+  <!-- CONFIGURAÇÕES -->
+  <div id="panel-config" class="panel">
+    <div class="card">
+      <div class="card-title">Chave da API do agente IA</div>
+      <p style="font-size:13px;color:#888;margin-bottom:14px;line-height:1.6">Para o agente gerar ordens de compra com IA, informe sua chave da Anthropic. Ela fica salva apenas neste navegador (localStorage) e nunca é enviada para nenhum servidor além da Anthropic.</p>
+      <div class="frow">
+        <div><label>Anthropic API Key</label><input id="cfg-key" type="password" placeholder="sk-ant-..."/></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="salvarKey()">Salvar chave</button></div>
+      <div id="cfg-status" style="font-size:12px;color:#52a830;margin-top:8px;text-align:right"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://xvvqochxcgixhbrqjxwm.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2dnFvY2h4Y2dpeGhicnFqeHdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NjUwODksImV4cCI6MjA5MDE0MTA4OX0.DoIzk27rT_Z78s0bRF0Jn0DuW6YQUMkoGKimj3qsWRQ';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let itens = [], fornecedores = [], ordens = [], movs = [];
+let ocGeradasIds = new Set();
+
+function getApiKey() { return localStorage.getItem('anthropic_key') || ''; }
+function salvarKey() {
+  const k = document.getElementById('cfg-key').value.trim();
+  if (!k) { alert('Informe a chave.'); return; }
+  localStorage.setItem('anthropic_key', k);
+  document.getElementById('cfg-status').textContent = 'Chave salva com sucesso!';
+  setTimeout(() => document.getElementById('cfg-status').textContent = '', 3000);
+}
+
+// ── helpers ──────────────────────────────────────────
+function status(it) {
+  if (it.saldo <= 0)          return { label:'Crítico', cls:'b-crit' };
+  if (it.saldo <= it.minimo)  return { label:'Baixo',   cls:'b-low'  };
+  return { label:'Normal', cls:'b-ok' };
+}
+function pct(it) {
+  return it.minimo ? Math.min(100, Math.round(it.saldo / (it.minimo * 2) * 100)) : 100;
+}
+function barColor(it) {
+  const s = status(it).label;
+  return s === 'Crítico' ? '#d94040' : s === 'Baixo' ? '#d4860a' : '#52a830';
+}
+function fmtDate(d) {
+  return new Date(d).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+// ── render ────────────────────────────────────────────
+function renderEstoque() {
+  const wrap = document.getElementById('tb-estoque-wrap');
+  if (!itens.length) { wrap.innerHTML = '<div class="empty">Nenhum item cadastrado.</div>'; return; }
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Item</th><th>Categoria</th><th>Saldo</th><th>Mínimo</th><th>Status</th><th>Nível</th><th></th></tr></thead>
+    <tbody>${itens.map(it => {
+      const s = status(it), p = pct(it);
+      return `<tr>
+        <td><strong>${it.nome}</strong></td>
+        <td style="color:#888">${it.categoria||'—'}</td>
+        <td><strong>${it.saldo}</strong> ${it.unidade}</td>
+        <td style="color:#888">${it.minimo} ${it.unidade}</td>
+        <td><span class="badge ${s.cls}">${s.label}</span></td>
+        <td><div class="bar-wrap"><div class="bar-fill" style="width:${p}%;background:${barColor(it)}"></div></div></td>
+        <td>${it.saldo <= it.minimo ? `<button class="btn btn-sm" onclick="gerarOCManual(${it.id})">Cotar agora</button>` : ''}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+function renderMov() {
+  const wrap = document.getElementById('tb-mov-wrap');
+  if (!movs.length) { wrap.innerHTML = '<div class="empty">Nenhuma movimentação.</div>'; return; }
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Data</th><th>Item</th><th>Tipo</th><th>Qtd</th><th>Saldo após</th><th>Responsável</th></tr></thead>
+    <tbody>${movs.slice(0,50).map(m => {
+      const it = itens.find(i => i.id === m.item_id);
+      return `<tr>
+        <td style="color:#888;white-space:nowrap">${fmtDate(m.criado_em)}</td>
+        <td>${it ? it.nome : '—'}</td>
+        <td><span class="badge mov-${m.tipo}">${m.tipo==='entrada'?'Entrada':'Saída'}</span></td>
+        <td><strong>${m.tipo==='saida'?'-':'+'}${m.quantidade}</strong></td>
+        <td>${m.saldo_apos}</td>
+        <td style="color:#888">${m.responsavel||'—'}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+function renderForn() {
+  const wrap = document.getElementById('tb-forn-wrap');
+  if (!fornecedores.length) { wrap.innerHTML = '<div class="empty">Nenhum fornecedor.</div>'; return; }
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Fornecedor</th><th>E-mail</th><th>Telefone</th><th>Materiais</th></tr></thead>
+    <tbody>${fornecedores.map(f => `<tr>
+      <td><strong>${f.nome}</strong></td>
+      <td style="color:#888">${f.email||'—'}</td>
+      <td style="color:#888">${f.telefone||'—'}</td>
+      <td style="color:#888">${f.materiais||'—'}</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+function renderOrdens() {
+  const el = document.getElementById('oc-lista');
+  if (!ordens.length) { el.innerHTML = '<div class="empty">Nenhuma ordem de compra gerada ainda.</div>'; return; }
+  el.innerHTML = [...ordens].reverse().map(oc => {
+    const it   = itens.find(i => i.id === oc.item_id);
+    const forn = fornecedores.find(f => f.id === oc.fornecedor_id);
+    return `<div class="oc-card">
+      <div class="oc-head">
+        <div>
+          <div class="oc-num">OC-${String(oc.id).padStart(4,'0')} — ${it?it.nome:'—'}</div>
+          <div class="oc-meta">${fmtDate(oc.criado_em)} · Fornecedor: ${forn?forn.nome:'A definir'} · Qtd: ${oc.quantidade} ${it?it.unidade:''}</div>
+        </div>
+        <div class="oc-actions">
+          <span class="badge ${oc.status==='Pendente'?'b-pend':oc.status==='Aprovada'?'b-aprov':'b-rec'}">${oc.status}</span>
+          ${oc.status==='Pendente'?`<button class="btn btn-sm btn-primary" onclick="atualizarOC(${oc.id},'Aprovada')">Aprovar</button><button class="btn btn-sm" onclick="atualizarOC(${oc.id},'Recusada')">Recusar</button>`:''}
+        </div>
+      </div>
+      ${oc.texto_ordem?`<div class="oc-texto">${oc.texto_ordem}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderBanner() {
+  const baixos = itens.filter(it => it.saldo <= it.minimo);
+  const el = document.getElementById('alertas-banner');
+  if (!baixos.length) { el.innerHTML=''; return; }
+  el.innerHTML = `<div class="alert-banner"><strong>Atenção:</strong> ${baixos.length} item(ns) abaixo do mínimo: ${baixos.map(i=>`<strong>${i.nome}</strong> (${i.saldo} ${i.unidade})`).join(', ')}.</div>`;
+}
+
+function renderMetrics() {
+  document.getElementById('m-itens').textContent   = itens.length;
+  document.getElementById('m-alertas').textContent = itens.filter(it=>it.saldo<=it.minimo).length;
+  document.getElementById('m-forn').textContent    = fornecedores.length;
+  document.getElementById('m-oc').textContent      = ordens.filter(o=>o.status==='Pendente').length;
+}
+
+function populateMovSelect() {
+  const s = document.getElementById('mov-item');
+  s.innerHTML = '<option value="">Selecione...</option>' + itens.map(it=>`<option value="${it.id}">${it.nome} (${it.saldo} ${it.unidade})</option>`).join('');
+}
+
+function renderAll() {
+  renderEstoque(); renderMov(); renderForn(); renderOrdens(); renderBanner(); renderMetrics(); populateMovSelect();
+  const k = getApiKey();
+  if (k) document.getElementById('cfg-key').value = k;
+}
+
+// ── carregar ──────────────────────────────────────────
+async function loadAll() {
+  const [ri,rf,ro,rm] = await Promise.all([
+    db.from('itens').select('*').order('nome'),
+    db.from('fornecedores').select('*').order('nome'),
+    db.from('ordens_compra').select('*').order('criado_em'),
+    db.from('movimentacoes').select('*').order('criado_em',{ascending:false}),
+  ]);
+  itens        = ri.data || [];
+  fornecedores = rf.data || [];
+  ordens       = ro.data || [];
+  movs         = rm.data || [];
+  ocGeradasIds = new Set(ordens.map(o=>o.item_id));
+  renderAll();
+  verificarAlertas();
+}
+
+// ── ações ─────────────────────────────────────────────
+async function addItem() {
+  const nome = document.getElementById('n-nome').value.trim();
+  if (!nome) { alert('Informe o nome do item.'); return; }
+  const {error} = await db.from('itens').insert({
+    nome,
+    categoria:    document.getElementById('n-cat').value.trim()||null,
+    unidade:      document.getElementById('n-un').value,
+    saldo:        parseFloat(document.getElementById('n-qtd').value)||0,
+    minimo:       parseFloat(document.getElementById('n-min').value)||0,
+    qtd_sugerida: parseFloat(document.getElementById('n-sug').value)||0,
+  });
+  if (error) { alert('Erro: '+error.message); return; }
+  ['n-nome','n-cat','n-qtd','n-min','n-sug'].forEach(id=>document.getElementById(id).value='');
+  await loadAll();
+}
+
+async function addForn() {
+  const nome = document.getElementById('f-nome').value.trim();
+  if (!nome) { alert('Informe o nome do fornecedor.'); return; }
+  const {error} = await db.from('fornecedores').insert({
+    nome,
+    email:     document.getElementById('f-email').value.trim()||null,
+    telefone:  document.getElementById('f-tel').value.trim()||null,
+    materiais: document.getElementById('f-mats').value.trim()||null,
+  });
+  if (error) { alert('Erro: '+error.message); return; }
+  ['f-nome','f-email','f-tel','f-mats'].forEach(id=>document.getElementById(id).value='');
+  await loadAll();
+}
+
+async function addMov() {
+  const itemId = parseInt(document.getElementById('mov-item').value);
+  const tipo   = document.getElementById('mov-tipo').value;
+  const qtd    = parseFloat(document.getElementById('mov-qtd').value);
+  if (!itemId) { alert('Selecione um item.'); return; }
+  if (!qtd||qtd<=0) { alert('Quantidade inválida.'); return; }
+  const it = itens.find(i=>i.id===itemId);
+  if (tipo==='saida'&&qtd>it.saldo) { alert(`Saldo insuficiente: ${it.saldo} ${it.unidade}`); return; }
+  const novoSaldo = tipo==='entrada' ? it.saldo+qtd : it.saldo-qtd;
+  await Promise.all([
+    db.from('movimentacoes').insert({
+      item_id:    itemId, tipo, quantidade:qtd, saldo_apos:novoSaldo,
+      responsavel:document.getElementById('mov-resp').value.trim()||null,
+      observacao: document.getElementById('mov-obs').value.trim()||null,
+    }),
+    db.from('itens').update({saldo:novoSaldo}).eq('id',itemId),
+  ]);
+  ['mov-qtd','mov-resp','mov-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mov-item').value='';
+  await loadAll();
+}
+
+async function atualizarOC(id, status) {
+  await db.from('ordens_compra').update({status}).eq('id',id);
+  await loadAll();
+}
+
+// ── agente IA ─────────────────────────────────────────
+function matchForn(item) {
+  if (!fornecedores.length) return null;
+  const m = fornecedores.find(f =>
+    (f.materiais||'').toLowerCase().split(',').some(mat =>
+      item.nome.toLowerCase().includes(mat.trim().toLowerCase()) ||
+      mat.trim().toLowerCase().includes(item.nome.toLowerCase().split(' ')[0])
+    )
+  );
+  return m || fornecedores[0];
+}
+
+function gerarTextoLocal(item, fornNome, fornEmail, qtd) {
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  return `ORDEM DE COMPRA\nData: ${hoje}\n\nItem: ${item.nome}\nCategoria: ${item.categoria||'—'}\nQuantidade solicitada: ${qtd} ${item.unidade}\n\nJustificativa: Estoque abaixo do mínimo.\nSaldo atual: ${item.saldo} ${item.unidade} | Mínimo: ${item.minimo} ${item.unidade}\n\nFornecedor sugerido: ${fornNome}${fornEmail?'\nContato: '+fornEmail:''}\nPrazo de entrega esperado: 5 dias úteis\n\nAssinatura do responsável: ___________________________`;
+}
+
+async function gerarOC(item) {
+  setIA(true, 'Gerando ordem de compra...');
+  const forn     = matchForn(item);
+  const qtdSug   = item.qtd_sugerida || item.minimo * 2 || 10;
+  const fornNome = forn ? forn.nome  : 'A definir';
+  const fornEmail= forn ? forn.email : '';
+  let textoOrdem = '';
+
+  const apiKey = getApiKey();
+  if (apiKey) {
+    try {
+      const hoje = new Date().toLocaleDateString('pt-BR');
+      const prompt = `Você é um agente de compras industrial. Gere uma ordem de compra formal em português brasileiro.\n\nItem: ${item.nome}\nCategoria: ${item.categoria||'—'}\nSaldo atual: ${item.saldo} ${item.unidade}\nEstoque mínimo: ${item.minimo} ${item.unidade}\nQuantidade solicitada: ${qtdSug} ${item.unidade}\nFornecedor: ${fornNome}${fornEmail?'\nContato: '+fornEmail:''}\nData: ${hoje}\n\nGere a ordem com: cabeçalho, item, quantidade, justificativa, fornecedor, prazo de 5 dias úteis e campo de assinatura. Seja direto e profissional.`;
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
+        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user',content:prompt}] }),
+      });
+      const data = await res.json();
+      textoOrdem = data.content?.map(b=>b.text||'').join('')||'';
+    } catch { textoOrdem = ''; }
+  }
+
+  if (!textoOrdem) textoOrdem = gerarTextoLocal(item, fornNome, fornEmail, qtdSug);
+
+  await db.from('ordens_compra').insert({
+    item_id:      item.id,
+    fornecedor_id:forn?forn.id:null,
+    quantidade:   qtdSug,
+    status:       'Pendente',
+    texto_ordem:  textoOrdem,
+  });
+  setIA(false, 'Monitorando estoque...');
+  await loadAll();
+  showTab('ordens');
+}
+
+async function gerarOCManual(itemId) {
+  const it = itens.find(i=>i.id===itemId);
+  if (it) { ocGeradasIds.add(it.id); await gerarOC(it); }
+}
+
+function verificarAlertas() {
+  itens.filter(it=>it.saldo<=it.minimo&&!ocGeradasIds.has(it.id)).forEach(it=>{
+    ocGeradasIds.add(it.id);
+    setTimeout(()=>gerarOC(it), 600);
+  });
+}
+
+function setIA(thinking, msg) {
+  document.getElementById('ia-dot').className = 'ia-dot'+(thinking?' thinking':'');
+  document.getElementById('ia-sub').textContent = msg;
+}
+
+function showTab(tab) {
+  ['estoque','registrar','fornecedores','ordens','config'].forEach((t,i)=>{
+    document.getElementById('panel-'+t).classList.toggle('active',t===tab);
+    document.querySelectorAll('.tab')[i].classList.toggle('active',t===tab);
+  });
+}
+
+loadAll();
+</script>
+</body>
+</html>
