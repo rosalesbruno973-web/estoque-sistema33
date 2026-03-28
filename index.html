@@ -14,9 +14,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .login-box p{font-size:13px;color:#888;margin-bottom:24px}
 .lerr{font-size:12px;color:#c0392b;margin-bottom:12px;display:none}
 .lmsg{font-size:12px;color:#27ae60;margin-bottom:12px;display:none}
-.lb label{font-size:12px;color:#666;display:block;margin-bottom:4px}
-.lb input{width:100%;padding:8px 10px;font-size:13px;border:1px solid #ddd;border-radius:8px;font-family:inherit;outline:none;margin-bottom:14px}
-.lb input:focus{border-color:#888}
+.login-box label{font-size:12px;color:#666;display:block;margin-bottom:4px}
+.login-box input{width:100%;padding:8px 10px;font-size:13px;border:1px solid #ddd;border-radius:8px;font-family:inherit;outline:none;margin-bottom:14px}
 .topbar{background:#fff;border-bottom:1px solid #e5e5e0;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:10px;flex-wrap:wrap}
 .topbar h1{font-size:15px;font-weight:600;white-space:nowrap}
 .tr{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -75,9 +74,8 @@ input:focus,select:focus{border-color:#888}
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="tela-login" class="login-wrap">
-  <div class="login-box lb">
+  <div class="login-box">
     <h1>Controle de Estoque</h1><p>Entre com seu e-mail e senha</p>
     <div id="lerr" class="lerr"></div>
     <div id="lmsg" class="lmsg"></div>
@@ -97,7 +95,6 @@ input:focus,select:focus{border-color:#888}
   </div>
 </div>
 
-<!-- APP -->
 <div id="tela-app" style="display:none">
   <div class="topbar">
     <h1>Controle de Estoque</h1>
@@ -123,7 +120,6 @@ input:focus,select:focus{border-color:#888}
       <div class="metric"><div class="ml">Produtos cadastrados</div><div class="mv" id="m-produtos">—</div></div>
     </div>
 
-    <!-- ESTOQUE -->
     <div id="panel-estoque" class="panel active">
       <div class="card">
         <div class="ct">Cadastrar matéria-prima</div>
@@ -142,7 +138,6 @@ input:focus,select:focus{border-color:#888}
       <div class="card"><div class="ct">Itens em estoque</div><div id="te-wrap"><div class="loading">Carregando...</div></div></div>
     </div>
 
-    <!-- PRODUTOS -->
     <div id="panel-produtos" class="panel">
       <div class="card">
         <div class="ct">Cadastrar produto (válvula)</div>
@@ -156,13 +151,12 @@ input:focus,select:focus{border-color:#888}
           <button class="btn bsm" onclick="addCProd()">+ Componente</button>
         </div>
         <div class="chdr"><span>Matéria-prima</span><span>Qtd / unidade</span><span></span></div>
-        <div id="cprod-lista"><div style="font-size:13px;color:#bbb;padding:6px 0 8px">Clique em "+ Componente" para adicionar.</div></div>
+        <div id="cprod-lista"><div style="font-size:13px;color:#bbb;padding:6px 0">Clique em "+ Componente" para adicionar.</div></div>
         <div class="btn-row"><button class="btn bp" id="btn-saveprod" onclick="salvarProduto()">Salvar produto</button></div>
       </div>
       <div class="card"><div class="ct">Produtos cadastrados</div><div id="prod-lista"><div class="loading">Carregando...</div></div></div>
     </div>
 
-    <!-- PEDIDOS -->
     <div id="panel-pedidos" class="panel">
       <div class="card">
         <div class="ct">Novo pedido</div>
@@ -177,7 +171,7 @@ input:focus,select:focus{border-color:#888}
         </div>
         <div class="inforow">Selecione os produtos e quantidades. O estoque será descontado automaticamente ao confirmar.</div>
         <div class="phdr"><span>Produto / válvula</span><span>Quantidade</span><span></span></div>
-        <div id="ip-lista"><div style="font-size:13px;color:#bbb;padding:6px 0 8px">Clique em "+ Adicionar produto".</div></div>
+        <div id="ip-lista"><div style="font-size:13px;color:#bbb;padding:6px 0">Clique em "+ Adicionar produto".</div></div>
         <div id="insuf-box" style="display:none" class="insufbox"></div>
         <div id="resumo-box" style="display:none" class="resumobox"></div>
         <div class="btn-row"><button class="btn bp" id="btn-pedido" onclick="confirmarPedido()">Confirmar pedido e descontar estoque</button></div>
@@ -193,7 +187,6 @@ input:focus,select:focus{border-color:#888}
       </div>
     </div>
 
-    <!-- MOVIMENTAR -->
     <div id="panel-registrar" class="panel">
       <div class="card">
         <div class="ct">Movimentação manual</div>
@@ -211,7 +204,6 @@ input:focus,select:focus{border-color:#888}
       <div class="card"><div class="ct">Histórico de movimentações</div><div id="mov-wrap"><div class="loading">Carregando...</div></div></div>
     </div>
 
-    <!-- FORNECEDORES -->
     <div id="panel-fornecedores" class="panel">
       <div class="card">
         <div class="ct">Cadastrar fornecedor</div>
@@ -236,11 +228,9 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const {createClient}=supabase;
 const db=createClient(SB_URL,SB_KEY);
 
-// estado global
 const D={itens:[],forns:[],movs:[],peds:[],pedItens:[],prods:[],prodComps:[]};
-let user=null, filtro='todos', cP=[], iP=[], loaded=false;
+let user=null,filtro='todos',cP=[],iP=[],loaded=false;
 
-// ── auth ──────────────────────────────────────────────
 db.auth.onAuthStateChange(async(_,sess)=>{
   if(sess?.user){
     user=sess.user;
@@ -249,7 +239,7 @@ db.auth.onAuthStateChange(async(_,sess)=>{
     document.getElementById('info-user').textContent=nm;
     document.getElementById('tela-login').style.display='none';
     document.getElementById('tela-app').style.display='block';
-    if(!loaded){loaded=true;await carregarTudo();}
+    if(!loaded){loaded=true;await carregar();}
   } else {
     user=null;loaded=false;
     document.getElementById('tela-login').style.display='flex';
@@ -277,49 +267,52 @@ async function doLogout(){loaded=false;await db.auth.signOut();}
 function showReg(){document.getElementById('form-login').style.display='none';document.getElementById('form-reg').style.display='block';document.getElementById('lerr').style.display='none';}
 function showLogin(){document.getElementById('form-reg').style.display='none';document.getElementById('form-login').style.display='block';document.getElementById('lerr').style.display='none';}
 function getNm(){return user?.user_metadata?.nome||user?.email||'Sistema';}
+function busy(id,on,lbl){const b=document.getElementById(id);if(!b)return;b.disabled=on;if(lbl)b.textContent=on?'Aguarde...':lbl;}
 
-// ── carregar dados ─────────────────────────────────────
-async function carregarTudo(){
-  try{
-    const[ri,rf,rm,rp,rpi,rpr,rpc]=await Promise.all([
-      db.from('itens').select('*').order('nome'),
-      db.from('fornecedores').select('*').order('nome'),
-      db.from('movimentacoes').select('*').order('criado_em',{ascending:false}).limit(100),
-      db.from('pedidos').select('*').order('criado_em'),
-      db.from('pedido_itens').select('*'),
-      db.from('produtos').select('*').order('nome'),
-      db.from('produto_componentes').select('*'),
-    ]);
-    D.itens=ri.data||[];
-    D.forns=rf.data||[];
-    D.movs=rm.data||[];
-    D.peds=rp.data||[];
-    D.pedItens=rpi.data||[];
-    D.prods=rpr.data||[];
-    D.prodComps=rpc.data||[];
-    renderTudo();
-  } catch(err){
-    document.getElementById('te-wrap').innerHTML='<div class="empty">Erro ao carregar dados. Recarregue a página.</div>';
-    console.error(err);
-  }
+async function carregar(){
+  // carrega cada tabela separadamente para isolar erros
+  const ri=await db.from('itens').select('*').order('nome');
+  D.itens=ri.data||[];
+
+  const rf=await db.from('fornecedores').select('*').order('nome');
+  D.forns=rf.data||[];
+
+  const rm=await db.from('movimentacoes').select('*').order('criado_em',{ascending:false}).limit(100);
+  D.movs=rm.data||[];
+
+  const rp=await db.from('pedidos').select('*').order('criado_em');
+  D.peds=rp.data||[];
+
+  const rpi=await db.from('pedido_itens').select('*');
+  D.pedItens=rpi.data||[];
+
+  const rpr=await db.from('produtos').select('*').order('nome');
+  D.prods=rpr.data||[];
+
+  const rpc=await db.from('produto_componentes').select('*');
+  D.prodComps=rpc.data||[];
+
+  renderTudo();
 }
 
-// reloads seletivos
 async function riItens(){const{data}=await db.from('itens').select('*').order('nome');D.itens=data||[];rEstoque();rMetrics();rBanner();popMov();}
 async function riMovs(){const{data}=await db.from('movimentacoes').select('*').order('criado_em',{ascending:false}).limit(100);D.movs=data||[];rMov();}
-async function riPeds(){const[rp,rpi]=await Promise.all([db.from('pedidos').select('*').order('criado_em'),db.from('pedido_itens').select('*')]);D.peds=rp.data||[];D.pedItens=rpi.data||[];rPedidos();rMetrics();}
-async function riProds(){const[rpr,rpc]=await Promise.all([db.from('produtos').select('*').order('nome'),db.from('produto_componentes').select('*')]);D.prods=rpr.data||[];D.prodComps=rpc.data||[];rProdutos();rMetrics();rCProd();rIP();}
+async function riPeds(){
+  const[rp,rpi]=await Promise.all([db.from('pedidos').select('*').order('criado_em'),db.from('pedido_itens').select('*')]);
+  D.peds=rp.data||[];D.pedItens=rpi.data||[];rPedidos();rMetrics();
+}
+async function riProds(){
+  const[rpr,rpc]=await Promise.all([db.from('produtos').select('*').order('nome'),db.from('produto_componentes').select('*')]);
+  D.prods=rpr.data||[];D.prodComps=rpc.data||[];rProdutos();rMetrics();rCProd();rIP();
+}
 async function riForns(){const{data}=await db.from('fornecedores').select('*').order('nome');D.forns=data||[];rForn();}
 
-// ── helpers ───────────────────────────────────────────
-function stI(it){if(it.saldo<=0)return{l:'Crítico',c:'b-crit'};if(it.saldo<=it.minimo)return{l:'Baixo',c:'b-low'};return{l:'Normal',c:'b-ok'};}
-function pct(it){return it.minimo?Math.min(100,Math.round(it.saldo/(it.minimo*2)*100)):100;}
+function stI(it){if(it.saldo<=0)return{l:'Crítico',c:'b-crit'};if(it.minimo>0&&it.saldo<=it.minimo)return{l:'Baixo',c:'b-low'};return{l:'Normal',c:'b-ok'};}
+function pct(it){return it.minimo>0?Math.min(100,Math.round(it.saldo/(it.minimo*2)*100)):100;}
 function bc(it){const s=stI(it).l;return s==='Crítico'?'#d94040':s==='Baixo'?'#d4860a':'#52a830';}
 function fd(d){return new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
 function fdo(d){if(!d)return'—';const[y,m,dia]=d.split('-');return`${dia}/${m}/${y}`;}
-function busy(id,on,lbl){const b=document.getElementById(id);if(!b)return;b.disabled=on;if(lbl)b.textContent=on?'Aguarde...':lbl;}
 
-// ── renders ───────────────────────────────────────────
 function rEstoque(){
   const w=document.getElementById('te-wrap');
   if(!D.itens.length){w.innerHTML='<div class="empty">Nenhum item cadastrado ainda.</div>';return;}
@@ -345,14 +338,14 @@ function rProdutos(){
         <div><strong>${pr.nome}</strong>${pr.descricao?` <span style="color:#888;font-size:12px;font-weight:400">— ${pr.descricao}</span>`:''}</div>
         <button class="btn bsm bdg" onclick="delProd(${pr.id})">Excluir</button>
       </div>
-      <div>${cs.length?cs.map(c=>{const it=D.itens.find(i=>i.id===c.item_id);return`<span class="ctag">${it?it.nome:'?'}: ${c.quantidade} ${it?it.unidade:''}</span>`;}).join(''):'<span style="font-size:12px;color:#aaa">Sem componentes</span>'}</div>
+      <div>${cs.length?cs.map(c=>{const it=D.itens.find(i=>i.id===c.item_id);return`<span class="ctag">${it?it.nome:'?'}: ${c.quantidade} ${it?it.unidade:''}</span>`;}).join(''):'<span style="font-size:12px;color:#aaa">Sem componentes cadastrados</span>'}</div>
     </div>`;
   }).join('');
 }
 
 function rCProd(){
   const el=document.getElementById('cprod-lista');
-  if(!cP.length){el.innerHTML='<div style="font-size:13px;color:#bbb;padding:6px 0 8px">Clique em "+ Componente" para adicionar.</div>';return;}
+  if(!cP.length){el.innerHTML='<div style="font-size:13px;color:#bbb;padding:6px 0">Clique em "+ Componente" para adicionar.</div>';return;}
   el.innerHTML=cP.map((c,i)=>`<div class="crow">
     <select onchange="cP[${i}].iid=parseInt(this.value)||0">
       <option value="">Selecione a matéria-prima...</option>
@@ -366,7 +359,7 @@ function addCProd(){cP.push({iid:0,q:0});rCProd();}
 
 function rIP(){
   const el=document.getElementById('ip-lista');
-  if(!iP.length){el.innerHTML='<div style="font-size:13px;color:#bbb;padding:6px 0 8px">Clique em "+ Adicionar produto".</div>';updRes();return;}
+  if(!iP.length){el.innerHTML='<div style="font-size:13px;color:#bbb;padding:6px 0">Clique em "+ Adicionar produto".</div>';updRes();return;}
   el.innerHTML=iP.map((it,i)=>`<div class="prow">
     <select onchange="iP[${i}].pid=parseInt(this.value)||0;updRes()">
       <option value="">Selecione o produto...</option>
@@ -389,12 +382,12 @@ function updRes(){
   const linhas=[],prob=[];
   Object.entries(cons).forEach(([id,total])=>{
     const it=D.itens.find(i=>i.id===parseInt(id));if(!it)return;
-    linhas.push(`${total>it.saldo?'⚠ ':''}<strong>${it.nome}</strong>: ${total} ${it.unidade} <span style="color:#888">(saldo atual: ${it.saldo})</span>`);
+    linhas.push(`${total>it.saldo?'⚠ ':''}<strong>${it.nome}</strong>: ${total} ${it.unidade} <span style="color:#888">(saldo: ${it.saldo})</span>`);
     if(total>it.saldo)prob.push(`${it.nome}: precisa ${total}, tem ${it.saldo}`);
   });
   rb.style.display='block';
   rb.innerHTML=`<strong>Produtos:</strong> ${pList.join(', ')}<br><br><strong>Será descontado do estoque:</strong><br>${linhas.join('<br>')}`;
-  if(prob.length){ib.style.display='block';ib.innerHTML='<strong>Estoque insuficiente para confirmar:</strong><br>'+prob.join('<br>');}
+  if(prob.length){ib.style.display='block';ib.innerHTML='<strong>Estoque insuficiente:</strong><br>'+prob.join('<br>');}
   else ib.style.display='none';
 }
 
@@ -409,7 +402,7 @@ function rPedidos(){
       <div class="pedhd">
         <div>
           <div class="pednum">${p.numero} — ${p.cliente}</div>
-          <div class="pedmeta">Entrega: ${fdo(p.data_entrega)} · Criado por: ${p.criado_por||'—'} · ${fd(p.criado_em)}</div>
+          <div class="pedmeta">Entrega: ${fdo(p.data_entrega)} · Por: ${p.criado_por||'—'} · ${fd(p.criado_em)}</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
           <span class="badge ${sc}">${p.status}</span>
@@ -462,28 +455,30 @@ function rForn(){
 }
 
 function rBanner(){
-  const b=D.itens.filter(it=>it.saldo<=it.minimo&&it.minimo>0);
+  const b=D.itens.filter(it=>it.minimo>0&&it.saldo<=it.minimo);
   const el=document.getElementById('abanner');
   if(!b.length){el.innerHTML='';return;}
   el.innerHTML=`<div class="abanner"><strong>Atenção:</strong> ${b.length} item(ns) abaixo do mínimo: ${b.map(i=>`<strong>${i.nome}</strong> (${i.saldo} ${i.unidade})`).join(', ')}.</div>`;
 }
+
 function rMetrics(){
   document.getElementById('m-itens').textContent=D.itens.length;
-  document.getElementById('m-alertas').textContent=D.itens.filter(it=>it.saldo<=it.minimo&&it.minimo>0).length;
+  document.getElementById('m-alertas').textContent=D.itens.filter(it=>it.minimo>0&&it.saldo<=it.minimo).length;
   document.getElementById('m-pedidos').textContent=D.peds.filter(p=>p.status==='Em produção').length;
   document.getElementById('m-produtos').textContent=D.prods.length;
 }
+
 function popMov(){
   const s=document.getElementById('mov-item');
   s.innerHTML='<option value="">Selecione...</option>'+D.itens.map(it=>`<option value="${it.id}">${it.nome} (${it.saldo} ${it.unidade})</option>`).join('');
 }
-function renderTudo(){rEstoque();rProdutos();rPedidos();rMov();rForn();rBanner();rMetrics();popMov();rCProd();rIP();}
 
-// ── ações ─────────────────────────────────────────────
+function renderTudo(){rEstoque();rProdutos();rPedidos();rMov();rForn();rBanner();rMetrics();popMov();}
+
 async function addItem(){
   const nm=document.getElementById('n-nome').value.trim();
   if(!nm){alert('Informe o nome do item.');return;}
-  busy('btn-additem',true);
+  busy('btn-additem',true,'Adicionar item');
   const{error}=await db.from('itens').insert({
     nome:nm,
     categoria:document.getElementById('n-cat').value.trim()||null,
@@ -492,7 +487,7 @@ async function addItem(){
     minimo:parseFloat(document.getElementById('n-min').value)||0,
     qtd_sugerida:parseFloat(document.getElementById('n-sug').value)||0,
   });
-  if(error){alert('Erro ao salvar: '+error.message);busy('btn-additem',false,'Adicionar item');return;}
+  if(error){alert('Erro: '+error.message);busy('btn-additem',false,'Adicionar item');return;}
   ['n-nome','n-cat','n-qtd','n-min','n-sug'].forEach(id=>document.getElementById(id).value='');
   await riItens();
   busy('btn-additem',false,'Adicionar item');
@@ -503,7 +498,7 @@ async function salvarProduto(){
   if(!nm){alert('Informe o nome do produto.');return;}
   const val=cP.filter(c=>c.iid&&c.q>0);
   if(!val.length){alert('Adicione pelo menos um componente.');return;}
-  busy('btn-saveprod',true);
+  busy('btn-saveprod',true,'Salvar produto');
   const{data:pr,error}=await db.from('produtos').insert({nome:nm,descricao:document.getElementById('pr-desc').value.trim()||null,criado_por:getNm()}).select().single();
   if(error){alert('Erro: '+error.message);busy('btn-saveprod',false,'Salvar produto');return;}
   await db.from('produto_componentes').insert(val.map(c=>({produto_id:pr.id,item_id:c.iid,quantidade:c.q})));
@@ -511,11 +506,12 @@ async function salvarProduto(){
   cP=[];
   await riProds();
   busy('btn-saveprod',false,'Salvar produto');
-  alert(`Produto "${nm}" salvo com sucesso!`);
+  alert(`Produto "${nm}" salvo!`);
 }
 
 async function delProd(id){
-  if(!confirm('Excluir este produto? Pedidos existentes não serão afetados.'))return;
+  if(!confirm('Excluir este produto?'))return;
+  await db.from('produto_componentes').delete().eq('produto_id',id);
   await db.from('produtos').delete().eq('id',id);
   await riProds();
 }
@@ -532,35 +528,33 @@ async function confirmarPedido(){
   const prob=[];
   Object.entries(cons).forEach(([id,t])=>{const it=D.itens.find(i=>i.id===parseInt(id));if(it&&t>it.saldo)prob.push(`${it.nome}: precisa ${t}, tem ${it.saldo}`);});
   if(prob.length){alert('Estoque insuficiente:\n'+prob.join('\n'));return;}
-  busy('btn-pedido',true);
+  busy('btn-pedido',true,'Confirmar pedido e descontar estoque');
   const{data:ped,error:ep}=await db.from('pedidos').insert({numero:num,cliente:cli,data_entrega:dt,status:'Em produção',criado_por:getNm()}).select().single();
   if(ep){alert('Erro: '+ep.message);busy('btn-pedido',false,'Confirmar pedido e descontar estoque');return;}
   await db.from('pedido_itens').insert(val.map(it=>({pedido_id:ped.id,produto_id:it.pid,quantidade:it.qtd})));
-  await Promise.all(Object.entries(cons).map(async([id,total])=>{
-    const it=D.itens.find(i=>i.id===parseInt(id));if(!it)return;
-    const ns=parseFloat((it.saldo-total).toFixed(4));
-    await Promise.all([
-      db.from('itens').update({saldo:ns}).eq('id',it.id),
-      db.from('movimentacoes').insert({item_id:it.id,tipo:'saida',quantidade:total,saldo_apos:ns,responsavel:getNm(),observacao:`Pedido ${num} — ${cli}`}),
-    ]);
-  }));
+  for(const[id,total] of Object.entries(cons)){
+    const it=D.itens.find(i=>i.id===parseInt(id));if(!it)continue;
+    const ns=Math.round((it.saldo-total)*10000)/10000;
+    await db.from('itens').update({saldo:ns}).eq('id',it.id);
+    await db.from('movimentacoes').insert({item_id:it.id,tipo:'saida',quantidade:total,saldo_apos:ns,responsavel:getNm(),observacao:`Pedido ${num} — ${cli}`});
+  }
   ['p-cliente','p-num','p-data'].forEach(id=>document.getElementById(id).value='');
   iP=[];
   document.getElementById('resumo-box').style.display='none';
   document.getElementById('insuf-box').style.display='none';
-  await Promise.all([riItens(),riPeds(),riMovs()]);
+  await carregar();
   busy('btn-pedido',false,'Confirmar pedido e descontar estoque');
   goTab('pedidos');
-  alert(`Pedido ${num} criado com sucesso! Estoque atualizado.`);
+  alert(`Pedido ${num} criado! Estoque atualizado.`);
 }
 
 async function concluir(id){
-  if(!confirm('Marcar pedido como Concluído?'))return;
+  if(!confirm('Marcar como Concluído?'))return;
   await db.from('pedidos').update({status:'Concluído'}).eq('id',id);
   await riPeds();
 }
 async function cancelar(id){
-  if(!confirm('Cancelar este pedido? O estoque não será devolvido automaticamente.'))return;
+  if(!confirm('Cancelar este pedido? O estoque não será devolvido.'))return;
   await db.from('pedidos').update({status:'Cancelado'}).eq('id',id);
   await riPeds();
 }
@@ -573,12 +567,10 @@ async function addMov(){
   if(!qtd||qtd<=0){alert('Informe uma quantidade válida.');return;}
   const it=D.itens.find(i=>i.id===iid);
   if(tipo==='saida'&&qtd>it.saldo){alert(`Saldo insuficiente: ${it.saldo} ${it.unidade}`);return;}
-  busy('btn-mov',true);
+  busy('btn-mov',true,'Confirmar');
   const ns=tipo==='entrada'?it.saldo+qtd:it.saldo-qtd;
-  await Promise.all([
-    db.from('movimentacoes').insert({item_id:iid,tipo,quantidade:qtd,saldo_apos:ns,responsavel:getNm(),observacao:document.getElementById('mov-obs').value.trim()||null}),
-    db.from('itens').update({saldo:ns}).eq('id',iid),
-  ]);
+  await db.from('movimentacoes').insert({item_id:iid,tipo,quantidade:qtd,saldo_apos:ns,responsavel:getNm(),observacao:document.getElementById('mov-obs').value.trim()||null});
+  await db.from('itens').update({saldo:ns}).eq('id',iid);
   ['mov-qtd','mov-obs'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('mov-item').value='';
   await Promise.all([riItens(),riMovs()]);
@@ -588,7 +580,7 @@ async function addMov(){
 async function addForn(){
   const nm=document.getElementById('f-nome').value.trim();
   if(!nm){alert('Informe o nome do fornecedor.');return;}
-  busy('btn-forn',true);
+  busy('btn-forn',true,'Cadastrar');
   const{error}=await db.from('fornecedores').insert({nome:nm,email:document.getElementById('f-email').value.trim()||null,telefone:document.getElementById('f-tel').value.trim()||null,materiais:document.getElementById('f-mats').value.trim()||null});
   if(error){alert('Erro: '+error.message);busy('btn-forn',false,'Cadastrar');return;}
   ['f-nome','f-email','f-tel','f-mats'].forEach(id=>document.getElementById(id).value='');
@@ -596,7 +588,6 @@ async function addForn(){
   busy('btn-forn',false,'Cadastrar');
 }
 
-// ── navegação ─────────────────────────────────────────
 const TABS=['estoque','produtos','pedidos','registrar','fornecedores'];
 function goTab(t){
   TABS.forEach((n,i)=>{
